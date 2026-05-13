@@ -2,9 +2,11 @@
 // No filesystem, no env, no globals. Easy to test.
 
 import { relative } from 'node:path';
+import { MAX_COMMENT_CHARS } from './embed.mjs';
 
 export const COMMENT_MARKER = '<!-- looking-glass -->';
 export const VERDICT_ORDER = Object.freeze(['🟢', '🟡', '🔴']);
+export const OVERFLOW_FALLBACK_LINE = '📦 Screenshot omitted to stay under GitHub comment size limit - see [full screenshots]';
 
 /**
  * @param {Array<{slug: string}>} entries
@@ -53,9 +55,12 @@ export const overallStatus = (manifest, captionsData, critiquesData) => {
   return 'ok';
 };
 
-const renderShotCell = (entry, outDir) => {
+const renderShotCell = (entry, outDir, embedMap, overflow) => {
   if (!entry) return 'n/a';
   if (entry.error) return `⚠️ capture failed: ${entry.error}`;
+  if (overflow) return OVERFLOW_FALLBACK_LINE;
+  const dataUri = embedMap?.get(entry.file);
+  if (dataUri) return `![${entry.viewport}](${dataUri})`;
   return `![${entry.viewport}](${relative(outDir, entry.file)})`;
 };
 
@@ -85,14 +90,16 @@ const renderCritique = (critique) => {
  * @param {object|undefined} critique
  * @param {{routes: Array<{slug: string, url: string}>}} manifest
  * @param {string} outDir
+ * @param {{embedMap?: Map<string, string>, overflow?: boolean}} [opts]
  * @returns {string}
  */
-export const renderSection = (slug, group, captionsByKey, critique, manifest, outDir) => {
+export const renderSection = (slug, group, captionsByKey, critique, manifest, outDir, opts = {}) => {
   const label = group[0]?.label ?? slug;
   const route = manifest.routes.find((r) => r.slug === slug);
   const desktop = group.find((g) => g.viewport === 'desktop');
   const mobile = group.find((g) => g.viewport === 'mobile');
   const { verdictLine, body } = renderCritique(critique);
+  const { embedMap, overflow } = opts;
   return [
     `## ${label} - \`${route?.url ?? '/'}\``,
     '',
@@ -100,7 +107,7 @@ export const renderSection = (slug, group, captionsByKey, critique, manifest, ou
     '',
     '| Desktop | Mobile |',
     '|---------|--------|',
-    `| ${renderShotCell(desktop, outDir)} | ${renderShotCell(mobile, outDir)} |`,
+    `| ${renderShotCell(desktop, outDir, embedMap, overflow)} | ${renderShotCell(mobile, outDir, embedMap, overflow)} |`,
     '',
     `**Caption (desktop).** ${renderCaption(captionsByKey, `${slug}__desktop`)}`,
     '',
@@ -115,14 +122,27 @@ export const renderSection = (slug, group, captionsByKey, critique, manifest, ou
 
 /**
  * @param {object} args
- * @returns {string}
+ * @param {object} args.manifest
+ * @param {object|null} args.captionsData
+ * @param {object|null} args.critiquesData
+ * @param {string} args.prTitle
+ * @param {string} args.prNumber
+ * @param {string} args.outDir
+ * @param {string} args.generatedAt
+ * @param {Map<string, string>} [args.embedMap]
+ * @param {string} [args.artefactLink]
+ * @param {number} [args.maxChars]
+ * @returns {{body: string, summary: string, status: string}}
  */
-export const renderArtefact = ({ manifest, captionsData, critiquesData, prTitle, prNumber, outDir, generatedAt }) => {
+export const renderArtefact = ({
+  manifest, captionsData, critiquesData, prTitle, prNumber, outDir, generatedAt,
+  embedMap, artefactLink, maxChars = MAX_COMMENT_CHARS
+}) => {
   const summary = summariseVerdicts(critiquesData?.critiques);
   const status = overallStatus(manifest, captionsData, critiquesData);
   const model = critiquesData?.model || captionsData?.model || '(none)';
   const groups = groupBySlug(manifest.entries);
-  const header = [
+  const headerLines = [
     COMMENT_MARKER,
     '# 🪞 looking-glass review',
     '',
@@ -131,15 +151,28 @@ export const renderArtefact = ({ manifest, captionsData, critiquesData, prTitle,
     `Model: ${model}`,
     `Status: ${status}`,
     `Generated: ${generatedAt}`,
-    '',
-    '## Summary',
-    summary,
-    '',
-    '---',
     ''
-  ].join('\n');
-  const sections = [...groups.entries()].map(([slug, group]) =>
-    renderSection(slug, group, captionsData?.captions, critiquesData?.critiques?.[slug], manifest, outDir)
-  );
-  return { body: `${header}${sections.join('')}`, summary, status };
+  ];
+  if (artefactLink) headerLines.push(artefactLink, '');
+  headerLines.push('## Summary', summary, '', '---', '');
+  const header = headerLines.join('\n');
+  const groupList = [...groups.entries()];
+  const rendered = [];
+  let used = header.length;
+  let overflow = false;
+  for (const [slug, group] of groupList) {
+    if (!overflow && embedMap) {
+      const candidate = renderSection(slug, group, captionsData?.captions, critiquesData?.critiques?.[slug], manifest, outDir, { embedMap });
+      if (used + candidate.length <= maxChars) {
+        rendered.push(candidate);
+        used += candidate.length;
+        continue;
+      }
+      overflow = true;
+    }
+    const fallback = renderSection(slug, group, captionsData?.captions, critiquesData?.critiques?.[slug], manifest, outDir, { overflow: Boolean(embedMap) });
+    rendered.push(fallback);
+    used += fallback.length;
+  }
+  return { body: `${header}${rendered.join('')}`, summary, status };
 };

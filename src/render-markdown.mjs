@@ -4,6 +4,7 @@ import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { renderArtefact } from './lib/markdown.mjs';
+import { buildEmbedMap, artefactDownloadLine } from './lib/embed.mjs';
 import * as log from './lib/log.mjs';
 
 const ARTEFACT_NAME = 'looking-glass.md';
@@ -25,6 +26,15 @@ const run = async () => {
   if (!manifest) throw new Error('manifest.json not found');
   const captionsData = await safeReadJson(join(outDir, 'captions.json'));
   const critiquesData = await safeReadJson(join(outDir, 'critiques.json'));
+  const runUrl = process.env.LG_RUN_URL || '';
+  const artefactLink = artefactDownloadLine(runUrl);
+  let embedMap;
+  try {
+    embedMap = await buildEmbedMap(manifest.entries);
+  } catch (err) {
+    log.warn(`embed map failed, falling back to relative paths: ${err.message}`);
+    embedMap = new Map();
+  }
   const { body, summary, status } = renderArtefact({
     manifest,
     captionsData,
@@ -32,8 +42,11 @@ const run = async () => {
     prTitle: process.env.LG_PR_TITLE || '',
     prNumber: process.env.LG_PR_NUMBER || '',
     outDir,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    embedMap,
+    artefactLink
   });
+  log.info(`artefact comment size: ${body.length} chars (${embedMap.size} embedded thumbnails)`);
 
   const artefactPath = join(outDir, ARTEFACT_NAME);
   await writeFile(artefactPath, body);

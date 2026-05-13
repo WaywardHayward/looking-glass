@@ -22,6 +22,19 @@ BDD generation lands in v0.4. v0.3 is captions + critique only.
 
 Three steps. Copy, paste, ship.
 
+> ## Required permissions
+>
+> `gh models run` calls require `models: read` on the workflow's `GITHUB_TOKEN`. Add to your workflow:
+>
+> ```yaml
+> permissions:
+>   contents: read
+>   pull-requests: write
+>   models: read
+> ```
+>
+> Without it, captions and critique will return 401 and the comment will degrade to screenshots-only.
+
 **1. Drop the rubric** in your repo root as `design-rubric.yml`:
 
 ```yaml
@@ -46,6 +59,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  models: read
 jobs:
   review:
     runs-on: ubuntu-latest

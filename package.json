@@ -16,6 +16,7 @@
     "comment": "node src/comment.mjs"
   },
   "dependencies": {
+    "sharp": "^0.34.5",
     "yaml": "^2.6.0"
   },
   "peerDependencies": {
