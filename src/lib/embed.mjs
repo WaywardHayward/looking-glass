@@ -5,7 +5,8 @@ import { existsSync } from 'node:fs';
 
 export const MAX_COMMENT_CHARS = 55000;
 export const THUMB_WIDTH = 200;
-export const THUMB_QUALITY = 70;
+export const THUMB_HEIGHT = 300;
+export const THUMB_QUALITY = 60;
 const DATA_URI_PREFIX = 'data:image/jpeg;base64,';
 
 let sharpModule = null;
@@ -28,8 +29,8 @@ export const thumbnailToDataUri = async (path) => {
   try {
     const sharp = await loadSharp();
     const buf = await sharp(path)
-      .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
-      .jpeg({ quality: THUMB_QUALITY })
+      .resize({ width: THUMB_WIDTH, height: THUMB_HEIGHT, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: THUMB_QUALITY, mozjpeg: true })
       .toBuffer();
     return `${DATA_URI_PREFIX}${buf.toString('base64')}`;
   } catch {

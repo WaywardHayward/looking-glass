@@ -107,6 +107,7 @@ runs:
         LG_OUT_DIR: ${{ github.workspace }}/out
         LG_PR_TITLE: ${{ github.event.pull_request.title }}
         LG_PR_NUMBER: ${{ github.event.pull_request.number }}
+        LG_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: node ${{ github.action_path }}/../../src/render-markdown.mjs
 
     - name: 'Upload artefact'
