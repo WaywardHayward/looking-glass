@@ -2,20 +2,50 @@ name: 'looking-glass / review'
 description: 'Capture screenshots, generate captions and critique, post the PR comment.'
 
 inputs:
-  base-url: { required: true,  description: 'Base URL to visit.' }
-  routes:   { required: true,  description: 'JSON array of routes.' }
-  viewports:{ required: false, description: 'JSON array of viewports.', default: '[{"name":"desktop","width":1440,"height":900},{"name":"mobile","width":390,"height":844}]' }
-  rubric-path: { required: false, description: 'Rubric file path.', default: 'design-rubric.yml' }
-  captions: { required: false, description: 'Run caption job.',  default: 'true' }
-  critique: { required: false, description: 'Run critique job.', default: 'true' }
-  model:    { required: false, description: 'LLM model id.',     default: '' }
-  pr-comment:{required: false, description: 'Post PR comment.',  default: 'true' }
-  gh-token: { required: true,  description: 'GITHUB_TOKEN.' }
+  base-url:
+    required: true
+    description: 'Base URL to visit.'
+  routes:
+    required: true
+    description: 'JSON array of routes.'
+  viewports:
+    required: false
+    description: 'JSON array of viewports.'
+    default: '[{"name":"desktop","width":1440,"height":900},{"name":"mobile","width":390,"height":844}]'
+  rubric-path:
+    required: false
+    description: 'Rubric file path.'
+    default: 'design-rubric.yml'
+  captions:
+    required: false
+    description: 'Run caption job.'
+    default: 'true'
+  critique:
+    required: false
+    description: 'Run critique job.'
+    default: 'true'
+  model:
+    required: false
+    description: 'LLM model id.'
+    default: ''
+  pr-comment:
+    required: false
+    description: 'Post PR comment.'
+    default: 'true'
+  gh-token:
+    required: true
+    description: 'GITHUB_TOKEN.'
 
 outputs:
-  artefact-path: { description: 'Absolute path to artefact.', value: ${{ steps.render.outputs.artefact-path }} }
-  summary:       { description: 'Summary string.',           value: ${{ steps.render.outputs.summary }} }
-  status:        { description: 'ok | partial | error',      value: ${{ steps.render.outputs.status }} }
+  artefact-path:
+    description: 'Absolute path to artefact.'
+    value: ${{ steps.render.outputs.artefact-path }}
+  summary:
+    description: 'Summary string.'
+    value: ${{ steps.render.outputs.summary }}
+  status:
+    description: 'ok | partial | error'
+    value: ${{ steps.render.outputs.status }}
 
 runs:
   using: 'composite'
