@@ -1,0 +1,38 @@
+# Drop this in your repo at .github/workflows/looking-glass.yml
+# and adjust base-url + routes for your app.
+
+name: looking-glass
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: looking-glass review
+        uses: WaywardHayward/looking-glass/review@v1
+        with:
+          base-url: https://dev.example.com
+          routes: |
+            [
+              {"slug":"home","url":"/","label":"Home"},
+              {"slug":"configurator","url":"/build","label":"Build a figure"},
+              {"slug":"pricing","url":"/pricing","label":"Pricing"}
+            ]
+          rubric-path: design-rubric.yml
+          captions: 'true'
+          critique: 'true'
+          pr-comment: 'true'
+          gh-token: ${{ secrets.GITHUB_TOKEN }}

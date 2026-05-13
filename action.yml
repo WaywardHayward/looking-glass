@@ -1,0 +1,70 @@
+name: 'looking-glass'
+description: 'A mirror for code. Visual PR review via Playwright captures and multimodal LLM critique.'
+author: 'WaywardHayward'
+
+inputs:
+  base-url:
+    description: 'URL Playwright should visit (e.g. dev deploy URL).'
+    required: true
+  routes:
+    description: 'JSON array of routes: [{slug,url,label}].'
+    required: true
+  viewports:
+    description: 'JSON array of viewports.'
+    required: false
+    default: '[{"name":"desktop","width":1440,"height":900},{"name":"mobile","width":390,"height":844}]'
+  rubric-path:
+    description: 'Path in consumer repo to design-rubric.yml.'
+    required: false
+    default: 'design-rubric.yml'
+  captions:
+    description: 'Run caption job (true/false).'
+    required: false
+    default: 'true'
+  critique:
+    description: 'Run critique job (true/false).'
+    required: false
+    default: 'true'
+  model:
+    description: 'LLM model. Leave blank to auto-select.'
+    required: false
+    default: ''
+  pr-comment:
+    description: 'Post / update PR comment (true/false).'
+    required: false
+    default: 'true'
+  gh-token:
+    description: 'GITHUB_TOKEN with PR write scope.'
+    required: true
+
+outputs:
+  artefact-path:
+    description: 'Absolute path to the markdown artefact.'
+    value: ${{ steps.review.outputs.artefact-path }}
+  summary:
+    description: 'Short summary text.'
+    value: ${{ steps.review.outputs.summary }}
+  status:
+    description: 'ok | partial | error'
+    value: ${{ steps.review.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: review
+      name: 'looking-glass /review'
+      uses: ./actions/review
+      with:
+        base-url: ${{ inputs.base-url }}
+        routes: ${{ inputs.routes }}
+        viewports: ${{ inputs.viewports }}
+        rubric-path: ${{ inputs.rubric-path }}
+        captions: ${{ inputs.captions }}
+        critique: ${{ inputs.critique }}
+        model: ${{ inputs.model }}
+        pr-comment: ${{ inputs.pr-comment }}
+        gh-token: ${{ inputs.gh-token }}
+
+branding:
+  icon: 'eye'
+  color: 'purple'

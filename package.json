@@ -1,0 +1,34 @@
+{
+  "name": "looking-glass-action",
+  "version": "0.3.0",
+  "description": "A mirror for code. Visual PR review via Playwright captures and multimodal LLM critique.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "capture": "node src/capture.mjs",
+    "caption": "node src/caption.mjs",
+    "critique": "node src/critique.mjs",
+    "render": "node src/render-markdown.mjs",
+    "comment": "node src/comment.mjs"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.48.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": false
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WaywardHayward/looking-glass.git"
+  },
+  "license": "MIT"
+}

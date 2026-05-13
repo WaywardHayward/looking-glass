@@ -1,0 +1,32 @@
+# Example design rubric for looking-glass.
+#
+# Copy this file to your repo root as `design-rubric.yml` and adjust.
+# Every section is optional. Missing sections fall back to sensible defaults.
+
+brand:
+  voice: "playful, confident, builder-friendly"
+  tone: "warm, modern, never corporate"
+
+visual:
+  rules:
+    - "consistent 8px spacing rhythm"
+    - "primary action visible above the fold"
+    - "mobile layout has no horizontal scroll"
+    - "type scale max three sizes per viewport"
+    - "no orphaned elements floating without context"
+
+# Map route slug to its primary call-to-action.
+# The critique job knows the user should be able to perform this action.
+primaryActions:
+  home: "Start building a figure"
+  configurator: "Add to cart"
+  gallery: "Open a figure"
+  pricing: "Choose a plan"
+
+# Journeys the page should support. `includes` lists slugs touched.
+journeys:
+  - name: "Build then buy"
+    includes: [home, configurator, pricing]
+    expectations:
+      - "configurator -> pricing is one click away"
+      - "pricing reinforces the figure you just built"
